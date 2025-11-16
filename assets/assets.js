@@ -326,7 +326,7 @@ export const orderDummyData = [
     {
         id: "cmemm75h5001jtat89016h1p3",
         total: 214.2,
-        status: "PROCESSSING",
+        status: "PROCESSING",
         userId: "user_31dQbH27HVtovbs13X2cmqefddM",
         storeId: "cmemkqnzm000htat8u7n8cpte",
         addressId: "cmemm6g95001ftat8omv9b883",
