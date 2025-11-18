@@ -103,4 +103,4 @@ const OrderItem = ({ order }) => {
     )
 }
 
-export default OrderItem
+export default OrderItems
