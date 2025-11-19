@@ -4,8 +4,12 @@ import { format } from "date-fns"
 import toast from "react-hot-toast"
 import { DeleteIcon } from "lucide-react"
 import { couponDummyData } from "@/assets/assets"
+import { useAuth } from "@clerk/nextjs"
+import axios from "axios"
 
 export default function AdminCoupons() {
+
+    const { getToken } = useAuth()
 
     const [coupons, setCoupons] = useState([])
 
@@ -19,53 +23,119 @@ export default function AdminCoupons() {
         expiresAt: new Date()
     })
 
+    // Fetch all coupons
     const fetchCoupons = async () => {
-        setCoupons(couponDummyData)
+        try {
+            const token = await getToken()
+            const { data } = await axios.get('/api/admin/coupon', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setCoupons(data.coupons)
+
+        } catch (error) {
+            toast.error(error?.response?.data?.error || error.message)
+        }
     }
 
+    // Add a new coupon
     const handleAddCoupon = async (e) => {
         e.preventDefault()
-        // Logic to add a coupon
+        try {
+            const token = await getToken()
 
+            const couponToSend = {
+                ...newCoupon,
+                discount: Number(newCoupon.discount),
+                expiresAt: new Date(newCoupon.expiresAt)
+            }
 
+            const { data } = await axios.post('/api/admin/coupon', { coupon: couponToSend }, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+
+            toast.success(data.message)
+            await fetchCoupons()
+
+        } catch (error) {
+            toast.error(error?.response?.data?.error || error.message)
+        }
     }
 
+    // Handle input change
     const handleChange = (e) => {
         setNewCoupon({ ...newCoupon, [e.target.name]: e.target.value })
     }
 
+    // Delete a coupon
     const deleteCoupon = async (code) => {
-        // Logic to delete a coupon
+        try {
+            const confirmDelete = window.confirm("Are you sure you want to delete this coupon?")
+            if (!confirmDelete) return;
 
+            const token = await getToken()
+            await axios.delete(`/api/admin/coupon?code=${code}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
 
+            await fetchCoupons()
+            toast.success("Coupon deleted successfully")
+
+        } catch (error) {
+            toast.error(error?.response?.data?.error || error.message)
+        }
     }
 
     useEffect(() => {
-        fetchCoupons();
+        fetchCoupons()
     }, [])
 
     return (
         <div className="text-slate-500 mb-40">
 
-            {/* Add Coupon */}
+            {/* Add Coupon Form */}
             <form onSubmit={(e) => toast.promise(handleAddCoupon(e), { loading: "Adding coupon..." })} className="max-w-sm text-sm">
                 <h2 className="text-2xl">Add <span className="text-slate-800 font-medium">Coupons</span></h2>
                 <div className="flex gap-2 max-sm:flex-col mt-2">
-                    <input type="text" placeholder="Coupon Code" className="w-full mt-2 p-2 border border-slate-200 outline-slate-400 rounded-md"
-                        name="code" value={newCoupon.code} onChange={handleChange} required
+                    <input
+                        type="text"
+                        placeholder="Coupon Code"
+                        className="w-full mt-2 p-2 border border-slate-200 outline-slate-400 rounded-md"
+                        name="code"
+                        value={newCoupon.code}
+                        onChange={handleChange}
+                        required
                     />
-                    <input type="number" placeholder="Coupon Discount (%)" min={1} max={100} className="w-full mt-2 p-2 border border-slate-200 outline-slate-400 rounded-md"
-                        name="discount" value={newCoupon.discount} onChange={handleChange} required
+                    <input
+                        type="number"
+                        placeholder="Coupon Discount (%)"
+                        min={1}
+                        max={100}
+                        className="w-full mt-2 p-2 border border-slate-200 outline-slate-400 rounded-md"
+                        name="discount"
+                        value={newCoupon.discount}
+                        onChange={handleChange}
+                        required
                     />
                 </div>
-                <input type="text" placeholder="Coupon Description" className="w-full mt-2 p-2 border border-slate-200 outline-slate-400 rounded-md"
-                    name="description" value={newCoupon.description} onChange={handleChange} required
+                <input
+                    type="text"
+                    placeholder="Coupon Description"
+                    className="w-full mt-2 p-2 border border-slate-200 outline-slate-400 rounded-md"
+                    name="description"
+                    value={newCoupon.description}
+                    onChange={handleChange}
+                    required
                 />
 
                 <label>
                     <p className="mt-3">Coupon Expiry Date</p>
-                    <input type="date" placeholder="Coupon Expires At" className="w-full mt-1 p-2 border border-slate-200 outline-slate-400 rounded-md"
-                        name="expiresAt" value={format(newCoupon.expiresAt, 'yyyy-MM-dd')} onChange={handleChange}
+                    <input
+                        type="date"
+                        placeholder="Coupon Expires At"
+                        className="w-full mt-1 p-2 border border-slate-200 outline-slate-400 rounded-md"
+                        name="expiresAt"
+                        value={format(newCoupon.expiresAt, 'yyyy-MM-dd')}
+                        onChange={handleChange}
                     />
                 </label>
 
@@ -118,11 +188,14 @@ export default function AdminCoupons() {
                                     <td className="py-3 px-4 font-medium text-slate-800">{coupon.code}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.description}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.discount}%</td>
-                                    <td className="py-3 px-4 text-slate-800">{format(coupon.expiresAt, 'yyyy-MM-dd')}</td>
+                                    <td className="py-3 px-4 text-slate-800">{format(new Date(coupon.expiresAt), 'yyyy-MM-dd')}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.forNewUser ? 'Yes' : 'No'}</td>
                                     <td className="py-3 px-4 text-slate-800">{coupon.forMember ? 'Yes' : 'No'}</td>
                                     <td className="py-3 px-4 text-slate-800">
-                                        <DeleteIcon onClick={() => toast.promise(deleteCoupon(coupon.code), { loading: "Deleting coupon..." })} className="w-5 h-5 text-red-500 hover:text-red-800 cursor-pointer" />
+                                        <DeleteIcon
+                                            onClick={() => toast.promise(deleteCoupon(coupon.code), { loading: "Deleting coupon..." })}
+                                            className="w-5 h-5 text-red-500 hover:text-red-800 cursor-pointer"
+                                        />
                                     </td>
                                 </tr>
                             ))}
