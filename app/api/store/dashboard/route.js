@@ -10,7 +10,7 @@ export async function GET(request) {
         const {userId}=getAuth(request)
         const storeId =await authSeller(userId)
 
-        const order =await prisma.order.findMany({where:{storeId}})
+        const orders =await prisma.order.findMany({where:{storeId}})
 
         const products=await prisma.product.findMany({where:{storeId}})
 
@@ -22,7 +22,7 @@ export async function GET(request) {
         const dashboardData={
             ratings,
             totalOrders:orders.length,
-            totalEarnings:Math.round(Orders.reduce((acc,order)=>acc+order.total,0)),
+            totalEarnings:Math.round(orders.reduce((acc,order)=>acc+order.total,0)),
             totalProducts: products.length
 
         }

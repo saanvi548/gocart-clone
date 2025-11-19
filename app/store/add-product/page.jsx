@@ -1,5 +1,7 @@
 'use client'
 import { assets } from "@/assets/assets"
+import { useAuth } from "@clerk/nextjs"
+import axios from "axios"
 import Image from "next/image"
 import { useState } from "react"
 import { toast } from "react-hot-toast"
@@ -18,6 +20,7 @@ export default function StoreAddProduct() {
     })
     const [loading, setLoading] = useState(false)
 
+    const { getToken } = useAuth()
 
     const onChangeHandler = (e) => {
         setProductInfo({ ...productInfo, [e.target.name]: e.target.value })
@@ -25,8 +28,70 @@ export default function StoreAddProduct() {
 
     const onSubmitHandler = async (e) => {
         e.preventDefault()
-        // Logic to add a product
+
+        // --- VALIDATION CHECKS ---
         
+        // 1. Check for Category Selection
+        if (!productInfo.category) {
+            return toast.error("Please select a category.")
+        }
+
+        // 2. Check if prices are valid positive numbers
+        const mrp = parseFloat(productInfo.mrp)
+        const price = parseFloat(productInfo.price)
+
+        if (isNaN(mrp) || isNaN(price) || mrp <= 0 || price <= 0) {
+            return toast.error("Actual Price and Offer Price must be positive numbers.")
+        }
+        
+        // 3. Check for at least one image
+        if (!images[1] && !images[2] && !images[3] && !images[4]) {
+            return toast.error('Please upload at least one image')
+        }
+        
+        // --- END VALIDATION ---
+        
+        setLoading(true)
+
+        try {
+            const formData = new FormData()
+            
+            // Append product info
+            for (const key in productInfo) {
+                formData.append(key, productInfo[key])
+            }
+
+            // Append images
+            Object.keys(images).forEach((key) => {
+                images[key] && formData.append('images', images[key])
+            })
+
+            const token = await getToken()
+            
+            // API Call
+            const { data } = await axios.post('/api/store/product', formData, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            
+            toast.success(data.message)
+
+            // Reset state on success
+            setProductInfo({
+                name: "",
+                description: "",
+                mrp: 0,
+                price: 0,
+                category: "",
+            })
+
+            setImages({ 1: null, 2: null, 3: null, 4: null })
+
+        } catch (error) {
+            toast.error(error?.response?.data?.error || error.message)
+
+        } finally {
+            setLoading(false)
+        }
     }
 
 
@@ -57,11 +122,11 @@ export default function StoreAddProduct() {
             <div className="flex gap-5">
                 <label htmlFor="" className="flex flex-col gap-2 ">
                     Actual Price ($)
-                    <input type="number" name="mrp" onChange={onChangeHandler} value={productInfo.mrp} placeholder="0" rows={5} className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
+                    <input type="number" name="mrp" onChange={onChangeHandler} value={productInfo.mrp} placeholder="0" className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
                 </label>
                 <label htmlFor="" className="flex flex-col gap-2 ">
                     Offer Price ($)
-                    <input type="number" name="price" onChange={onChangeHandler} value={productInfo.price} placeholder="0" rows={5} className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
+                    <input type="number" name="price" onChange={onChangeHandler} value={productInfo.price} placeholder="0" className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
                 </label>
             </div>
 

@@ -2,23 +2,48 @@
 import { useEffect, useState } from "react"
 import Loading from "@/components/Loading"
 import { orderDummyData } from "@/assets/assets"
+import { useAuth } from "@clerk/nextjs"
+import axios from "axios"
+import toast from "react-hot-toast"
 
 export default function StoreOrders() {
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [selectedOrder, setSelectedOrder] = useState(null)
-    const [isModalOpen, setIsModalOpen] = useState(false)
-
+    // FIX 1: Complete the useState call
+    const [isModalOpen, setIsModalOpen] = useState(false) 
+    const {getToken}=useAuth()
 
     const fetchOrders = async () => {
-       setOrders(orderDummyData)
-       setLoading(false)
+        try{
+            const token =await getToken()
+            // NOTE: Assuming your API route is /api/store/orders for GET
+            const{ data}= await axios.get('/api/store/orders',{headers:{Authorization:`Bearer ${token}`}}) 
+            setOrders(data.orders)
+        }catch(error)
+        {
+            toast.error(error?.response?.data?.error || error.message)
+        }
+        setLoading(false)
     }
 
     const updateOrderStatus = async (orderId, status) => {
-        // Logic to update the status of an order
-
-
+        try
+        {
+            const token =await getToken()
+            // FIX 2: Correct API endpoint for updating the ORDER status
+            await axios.post('/api/store/order',{orderId,status},{headers:{Authorization:`Bearer ${token}`}})
+            
+            // Optimistic UI Update
+            setOrders(prev=>
+                prev.map(order=>
+                    order.id===orderId?{...order,status}:order)
+            )
+            toast.success('Order status Updated!')
+        }catch(error)
+        {
+            toast.error(error?.response?.data?.error || error.message)
+        }
     }
 
     const openModal = (order) => {
@@ -31,9 +56,10 @@ export default function StoreOrders() {
         setIsModalOpen(false)
     }
 
+    // FIX 3: Add getToken to the dependency array
     useEffect(() => {
         fetchOrders()
-    }, [])
+    }, []) 
 
     if (loading) return <Loading />
 
@@ -96,7 +122,7 @@ export default function StoreOrders() {
                 </div>
             )}
 
-            {/* Modal */}
+            {/* Modal (No changes needed here) */}
             {isModalOpen && selectedOrder && (
                 <div onClick={closeModal} className="fixed inset-0 flex items-center justify-center bg-black/50 text-slate-700 text-sm backdrop-blur-xs z-50" >
                     <div onClick={e => e.stopPropagation()} className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
