@@ -1,4 +1,5 @@
 import AdminLayout from "@/components/admin/AdminLayout";
+import { SignIn,SignedOut,SignedIn} from "@clerk/nextjs";
 
 export const metadata = {
     title: "GoCart. - Admin",
@@ -9,9 +10,17 @@ export default function RootAdminLayout({ children }) {
 
     return (
         <>
-            <AdminLayout>
-                {children}
-            </AdminLayout>
+            <SignedIn>
+                <AdminLayout>
+                    {children}
+                </AdminLayout>
+            </SignedIn>
+            <SignedOut>
+                <div className="min-h-screen flex items-center justify-center">
+                    <SignIn fallbackRedirectUrl="/admin" routing="hash"/>
+                </div>
+            </SignedOut>
+            
         </>
     );
 }

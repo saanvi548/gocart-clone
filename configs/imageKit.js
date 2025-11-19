@@ -7,6 +7,6 @@ const imagekit = new ImageKit({
 });
 
 // Add this line to make the variable available for import
-export { imagekit };
+export default imagekit ;
 // OR you can define and export in one line:
 // export const imagekit = new ImageKit({ ... });
