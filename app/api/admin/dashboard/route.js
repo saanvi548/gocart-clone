@@ -4,7 +4,7 @@ import { getAuth } from "@clerk/nextjs/server";
 import { isAction } from "@reduxjs/toolkit";
 import { NextResponse } from "next/server";
 
-export async function POST(request) {
+export async function GET(request) {
   try {
     const { userId } = getAuth(request);
     const isAdmin = await authAdmin(userId);
