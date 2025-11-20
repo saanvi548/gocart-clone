@@ -5,7 +5,8 @@ import { useEffect, useState } from "react"
 import { MailIcon, MapPinIcon } from "lucide-react"
 import Loading from "@/components/Loading"
 import Image from "next/image"
-import { dummyStoreData, productDummyData } from "@/assets/assets"
+import axios from "axios"
+import toast from "react-hot-toast"
 
 export default function StoreShop() {
 
@@ -14,15 +15,28 @@ export default function StoreShop() {
     const [storeInfo, setStoreInfo] = useState(null)
     const [loading, setLoading] = useState(true)
 
-    const fetchStoreData = async () => {
-        setStoreInfo(dummyStoreData)
-        setProducts(productDummyData)
-        setLoading(false)
-    }
-
+    // Moved fetch logic inside useEffect for cleaner dependency management
     useEffect(() => {
+        if (!username) {
+            setLoading(false);
+            return;
+        }
+        
+        const fetchStoreData = async () => {
+            try {
+                // CRITICAL FIX: Changed single quotes to backticks (`) for variable interpolation
+                const {data} = await axios.get(`/api/store/data?username=${username}`)
+                setStoreInfo(data.store)
+                setProducts(data.store.Product)
+            } catch (error) {
+                toast.error(error?.response?.data?.error || error.message)
+            }
+            setLoading(false)
+        }
+
         fetchStoreData()
-    }, [])
+    // Added 'username' to the dependency array for completeness
+    }, [username])
 
     return !loading ? (
         <div className="min-h-[70vh] mx-6">
@@ -40,17 +54,16 @@ export default function StoreShop() {
                     <div className="text-center md:text-left">
                         <h1 className="text-3xl font-semibold text-slate-800">{storeInfo.name}</h1>
                         <p className="text-sm text-slate-600 mt-2 max-w-lg">{storeInfo.description}</p>
-                        <div className="text-xs text-slate-500 mt-4 space-y-1"></div>
-                        <div className="space-y-2 text-sm text-slate-500">
-                            <div className="flex items-center">
+                        <div className="space-y-2 text-sm text-slate-500 mt-4">
+                            <div className="flex items-center justify-center md:justify-start">
                                 <MapPinIcon className="w-4 h-4 text-gray-500 mr-2" />
                                 <span>{storeInfo.address}</span>
                             </div>
-                            <div className="flex items-center">
+                            <div className="flex items-center justify-center md:justify-start">
                                 <MailIcon className="w-4 h-4 text-gray-500 mr-2" />
                                 <span>{storeInfo.email}</span>
                             </div>
-                           
+                            
                         </div>
                     </div>
                 </div>
@@ -59,9 +72,15 @@ export default function StoreShop() {
             {/* Products */}
             <div className=" max-w-7xl mx-auto mb-40">
                 <h1 className="text-2xl mt-12">Shop <span className="text-slate-800 font-medium">Products</span></h1>
-                <div className="mt-5 grid grid-cols-2 sm:flex flex-wrap gap-6 xl:gap-12 mx-auto">
-                    {products.map((product) => <ProductCard key={product.id} product={product} />)}
-                </div>
+                {products.length > 0 ? (
+                    <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 xl:gap-8 mx-auto">
+                        {products.map((product) => <ProductCard key={product.id} product={product} />)}
+                    </div>
+                ) : (
+                    <div className="flex justify-center items-center h-48">
+                        <p className="text-slate-500 text-lg">No products available in this store yet.</p>
+                    </div>
+                )}
             </div>
         </div>
     ) : <Loading />

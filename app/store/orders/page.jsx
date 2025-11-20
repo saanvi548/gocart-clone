@@ -32,7 +32,7 @@ export default function StoreOrders() {
         {
             const token =await getToken()
             // FIX 2: Correct API endpoint for updating the ORDER status
-            await axios.post('/api/store/order',{orderId,status},{headers:{Authorization:`Bearer ${token}`}})
+            await axios.post('/api/store/orders',{orderId,status},{headers:{Authorization:`Bearer ${token}`}})
             
             // Optimistic UI Update
             setOrders(prev=>

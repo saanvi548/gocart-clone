@@ -37,9 +37,8 @@ export async function POST(request){
     }
 }
 
-// =========================================================
-// GET: Fetch all orders for the store
-// =========================================================
+
+
 export async function GET(request){
     try{
         const {userId}=getAuth(request)

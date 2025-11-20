@@ -19,7 +19,7 @@ export async function GET(request)
 
         const store=await prisma.store.findUnique({
             where: {username,isActive:true},
-            include:{Product:{include:{rating:trur}}}
+            include:{Product:{include:{rating:true}}}
         })
 
         if(!store)
