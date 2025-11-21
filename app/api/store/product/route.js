@@ -26,16 +26,23 @@ export async function POST(request) {
         const price=Number(formData.get("price"))
         const category=formData.get("category")
         
+        // 👇 EXTRACT NEW FIELDS FROM CLIENT FORM DATA
+        const stock=formData.get("stock")
+        const stockStatus=formData.get("stockStatus")
+        const availableFrom=formData.get("availableFrom") 
+        const availableTo=formData.get("availableTo") 
+        // 👆
+
         // FIX 2 (Image Fetching): Use the correct key "images" sent from the client
         const images=formData.getAll("images") 
       
-        // Basic data validation
-        if(!name||!description||!mrp||!price||!category||images.length<1)
+        // Basic data validation - UPDATED TO INCLUDE NEW FIELDS
+        if(!name||!description||!mrp||!price||!category||!stock||!stockStatus||!availableFrom||!availableTo||images.length<1)
         {
             return NextResponse.json({error: 'missing product details'},{status:400})
         }
 
-        // Image upload and processing logic
+        // Image upload and processing logic (UNCHANGED)
         const imagesUrl =await Promise.all(images.map(async(image)=>{
             const buffer=Buffer.from(await image.arrayBuffer());
             const response = await imagekit.upload({
@@ -65,7 +72,13 @@ export async function POST(request) {
                 price,
                 category,
                 images: imagesUrl,
-                storeId // Use the authenticated storeId
+                storeId, // Use the authenticated storeId
+                // 👇 INSERTING NEW FIELDS WITH CORRECT TYPE CASTING
+                stock: parseInt(String(stock), 10), 
+                stockStatus: String(stockStatus).toUpperCase().replace(/\s/g, '_'), // Format for Prisma ENUM
+                availableFrom: new Date(String(availableFrom)), // Convert string date to Date object
+                availableTo: new Date(String(availableTo)),     // Convert string date to Date object
+                // 👆
             }
         })
 
@@ -79,7 +92,7 @@ export async function POST(request) {
 }
 
 // =========================================================
-// GET: Fetch all products for the authenticated store
+// GET: Fetch all products for the authenticated store (UNCHANGED)
 // =========================================================
 export async function GET(request) {
     try{
@@ -94,7 +107,7 @@ export async function GET(request) {
     
         const products =await prisma.product.findMany({where:{storeId}}) 
         return NextResponse.json({products})
-          
+            
     }catch(error)
     {
         console.error(error);

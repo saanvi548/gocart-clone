@@ -9,39 +9,51 @@ datasource db {
     directUrl = env("DIRECT_URL")
 }
 
+enum StockStatus {
+    STOCK_AVAILABLE
+    STOCK_UNAVAILABLE
+    STOCK_AVAILABLE_BY_PROXY
+}
+
 // Required for creating a User: id, name, email, image, cart (optional JSON string)
 model User {
-    id    String @id
-    name  String
-    email String
-    image String
-    cart  Json   @default("{}")
+    id          String   @id
+    name        String
+    email       String
+    image       String
+    cart        Json     @default("{}")
 
     // Relations
     ratings     Rating[]
     Address     Address[]
     store       Store?
-    buyerOrders Order[]   @relation("BuyerRelation")
+    buyerOrders Order[]  @relation("BuyerRelation")
 }
 
 // Required for creating a Product: name, description, mrp, price, images, category, storeId
 model Product {
-    id          String   @id @default(cuid())
-    name        String
-    description String
-    mrp         Float
-    price       Float
-    images      String[]
-    category    String
-    inStock     Boolean  @default(true)
-    storeId     String
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    id            String    @id @default(cuid())
+    name          String
+    description   String
+    mrp           Float
+    price         Float
+    images        String[]
+    category      String
+    inStock       Boolean   @default(true)
+    storeId       String
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
 
+    // New Fields
+    stock         Int         @default(0)
+    stockStatus   StockStatus @default(STOCK_AVAILABLE)
+    availableFrom DateTime // The start date of availability
+    availableTo   DateTime // The end date of availability
+    
     // Relations
-    store      Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
-    orderItems OrderItem[]
-    rating     Rating[]
+    store         Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+    orderItems    OrderItem[]
+    rating        Rating[]
 }
 
 enum OrderStatus {
@@ -73,21 +85,21 @@ model Order {
     orderItems    OrderItem[]
 
     // Relations
-    user    User    @relation("BuyerRelation", fields: [userId], references: [id])
-    store   Store   @relation(fields: [storeId], references: [id])
-    address Address @relation(fields: [addressId], references: [id])
+    user          User          @relation("BuyerRelation", fields: [userId], references: [id])
+    store         Store         @relation(fields: [storeId], references: [id])
+    address       Address       @relation(fields: [addressId], references: [id])
 }
 
 // Required for creating an OrderItem: orderId, productId, quantity, price
 model OrderItem {
-    orderId   String
-    productId String
-    quantity  Int
-    price     Float
+    orderId    String
+    productId  String
+    quantity   Int
+    price      Float
 
     // Relations
-    order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-    product Product @relation(fields: [productId], references: [id])
+    order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    product    Product @relation(fields: [productId], references: [id])
 
     @@id([orderId, productId])
 }
@@ -104,8 +116,8 @@ model Rating {
     updatedAt DateTime @updatedAt
 
     // Relations
-    user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
     @@unique([userId, productId, orderId])
 }
@@ -125,8 +137,8 @@ model Address {
     createdAt DateTime @default(now())
 
     // Relations
-    Order Order[]
-    user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    Order     Order[]
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Required for creating a Coupon: code, description, discount, forNewUser, isPublic, expiresAt
@@ -159,5 +171,5 @@ model Store {
 
     Product Product[]
     Order   Order[]
-    user    User      @relation(fields: [userId], references: [id])
+    user    User     @relation(fields: [userId], references: [id])
 }

@@ -9,6 +9,7 @@ import { toast } from "react-hot-toast"
 export default function StoreAddProduct() {
 
     const categories = ['Electronics', 'Clothing', 'Home & Kitchen', 'Beauty & Health', 'Toys & Games', 'Sports & Outdoors', 'Books & Media', 'Food & Drink', 'Hobbies & Crafts', 'Others']
+    const stockStatuses = ['Stock Available', 'Stock Unavailable', 'Stock Available by Proxy']
 
     const [images, setImages] = useState({ 1: null, 2: null, 3: null, 4: null })
     const [productInfo, setProductInfo] = useState({
@@ -16,6 +17,10 @@ export default function StoreAddProduct() {
         description: "",
         mrp: 0,
         price: 0,
+        stock: 0,
+        stockStatus: "",
+        availableFrom: "",
+        availableTo: "",
         category: "",
     })
     const [loading, setLoading] = useState(false)
@@ -35,16 +40,39 @@ export default function StoreAddProduct() {
         if (!productInfo.category) {
             return toast.error("Please select a category.")
         }
+        
+        // 2. Check for Stock Status Selection
+        if (!productInfo.stockStatus) {
+            return toast.error("Please select a stock status.")
+        }
+        
+        // 3. Check for Availability Dates
+        if (!productInfo.availableFrom || !productInfo.availableTo) { 
+            return toast.error("Please select both 'Available From' and 'Available To' dates.")
+        }
+        
+        // Check if Available From is not after Available To
+        const dateFrom = new Date(productInfo.availableFrom);
+        const dateTo = new Date(productInfo.availableTo);
 
-        // 2. Check if prices are valid positive numbers
+        if (dateFrom > dateTo) {
+            return toast.error("'Available From' date cannot be after 'Available To' date.")
+        }
+
+        // 4. Check if prices and stock are valid non-negative numbers
         const mrp = parseFloat(productInfo.mrp)
         const price = parseFloat(productInfo.price)
+        const stock = parseInt(productInfo.stock)
 
         if (isNaN(mrp) || isNaN(price) || mrp <= 0 || price <= 0) {
             return toast.error("Actual Price and Offer Price must be positive numbers.")
         }
         
-        // 3. Check for at least one image
+        if (isNaN(stock) || stock < 0) {
+             return toast.error("Stock must be a non-negative number.")
+        }
+        
+        // 5. Check for at least one image
         if (!images[1] && !images[2] && !images[3] && !images[4]) {
             return toast.error('Please upload at least one image')
         }
@@ -81,6 +109,10 @@ export default function StoreAddProduct() {
                 description: "",
                 mrp: 0,
                 price: 0,
+                stock: 0,
+                stockStatus: "",
+                availableFrom: "", 
+                availableTo: "",   
                 category: "",
             })
 
@@ -119,7 +151,8 @@ export default function StoreAddProduct() {
                 <textarea name="description" onChange={onChangeHandler} value={productInfo.description} placeholder="Enter product description" rows={5} className="w-full max-w-sm p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
             </label>
 
-            <div className="flex gap-5">
+            {/* Price and Stock Row */}
+            <div className="flex gap-5 flex-wrap">
                 <label htmlFor="" className="flex flex-col gap-2 ">
                     Actual Price ($)
                     <input type="number" name="mrp" onChange={onChangeHandler} value={productInfo.mrp} placeholder="0" className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
@@ -128,14 +161,62 @@ export default function StoreAddProduct() {
                     Offer Price ($)
                     <input type="number" name="price" onChange={onChangeHandler} value={productInfo.price} placeholder="0" className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
                 </label>
+                <label htmlFor="" className="flex flex-col gap-2 ">
+                    Stock (Units)
+                    <input type="number" name="stock" onChange={onChangeHandler} value={productInfo.stock} placeholder="0" className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
+                </label>
             </div>
 
-            <select onChange={e => setProductInfo({ ...productInfo, category: e.target.value })} value={productInfo.category} className="w-full max-w-sm p-2 px-4 my-6 outline-none border border-slate-200 rounded" required>
-                <option value="">Select a category</option>
-                {categories.map((category) => (
-                    <option key={category} value={category}>{category}</option>
-                ))}
-            </select>
+            {/* Availability Date Row */}
+            <div className="flex gap-5 flex-wrap my-6">
+                <label htmlFor="" className="flex flex-col gap-2 ">
+                    Available From
+                    <input 
+                        type="date" 
+                        name="availableFrom" 
+                        onChange={onChangeHandler} 
+                        value={productInfo.availableFrom} 
+                        className="w-full max-w-sm p-2 px-4 outline-none border border-slate-200 rounded"
+                        required 
+                    />
+                </label>
+                <label htmlFor="" className="flex flex-col gap-2 ">
+                    Available To
+                    <input 
+                        type="date" 
+                        name="availableTo" 
+                        onChange={onChangeHandler} 
+                        value={productInfo.availableTo} 
+                        className="w-full max-w-sm p-2 px-4 outline-none border border-slate-200 rounded"
+                        required 
+                    />
+                </label>
+            </div>
+
+            {/* Stock Status Row (New Separate Line) */}
+            <div className="flex gap-5 flex-wrap my-6">
+                <select 
+                    onChange={e => setProductInfo({ ...productInfo, stockStatus: e.target.value })} 
+                    value={productInfo.stockStatus} 
+                    className="w-full max-w-sm p-2 px-4 outline-none border border-slate-200 rounded" 
+                    required
+                >
+                    <option value="">Select Stock Status</option>
+                    {stockStatuses.map((status) => (
+                        <option key={status} value={status}>{status}</option>
+                    ))}
+                </select>
+            </div>
+
+            {/* Category Row (New Separate Line) */}
+            <div className="flex gap-5 flex-wrap my-6">
+                <select onChange={e => setProductInfo({ ...productInfo, category: e.target.value })} value={productInfo.category} className="w-full max-w-sm p-2 px-4 outline-none border border-slate-200 rounded" required>
+                    <option value="">Select a category</option>
+                    {categories.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                    ))}
+                </select>
+            </div>
 
             <br />
 
