@@ -21,6 +21,7 @@ function ShopContent() {
   const [maxPrice, setMaxPrice] = useState("");
   const [sortOrder, setSortOrder] = useState("");
   const [maxDistance, setMaxDistance] = useState(50);
+  const [stockStatus, setStockStatus] = useState("");
 
   // Haversine distance calculator
   function getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -53,6 +54,11 @@ function ShopContent() {
     if (minPrice) filtered = filtered.filter((p) => p.price >= Number(minPrice));
     if (maxPrice) filtered = filtered.filter((p) => p.price <= Number(maxPrice));
 
+    // STOCK STATUS FILTER
+    if (stockStatus) {
+      filtered = filtered.filter((p) => p.stockStatus === stockStatus);
+    }
+
     // DISTANCE FILTER
     if (selectedLocation?.location) {
       const userLat = selectedLocation.location.lat;
@@ -80,6 +86,7 @@ function ShopContent() {
     sortOrder,
     selectedLocation,
     maxDistance,
+    stockStatus,
   ]);
 
   const categories = [...new Set(products.map((p) => p.category))];
@@ -95,7 +102,13 @@ function ShopContent() {
             className="text-2xl text-slate-500 my-6 flex items-center gap-2 cursor-pointer"
           >
             {search && <MoveLeftIcon size={20} />}
-            All <span className="text-slate-700 font-medium">Products</span>
+            {selectedCategory ? (
+              <span className="text-slate-700 font-medium">{selectedCategory}</span>
+            ) : (
+              <>
+                All <span className="text-slate-700 font-medium">Products</span>
+              </>
+            )}
           </h1>
 
           {selectedLocation && (
@@ -124,29 +137,7 @@ function ShopContent() {
           {/* LOCATION */}
           <div className="mb-6">
             <p className="text-sm font-medium mb-1">Location</p>
-            <LocationInput onSelect={async (place) => {
-              // If place already has location, use it
-              if (place.location?.lat && place.location?.lng) {
-                setSelectedLocation(place);
-                return;
-              }
-              
-              // Otherwise, geocode the place_id
-              if (place.place_id && window.google) {
-                const geocoder = new window.google.maps.Geocoder();
-                geocoder.geocode({ placeId: place.place_id }, (results, status) => {
-                  if (status === 'OK' && results[0]) {
-                    setSelectedLocation({
-                      description: place.description,
-                      location: {
-                        lat: results[0].geometry.location.lat(),
-                        lng: results[0].geometry.location.lng()
-                      }
-                    });
-                  }
-                });
-              }
-            }} />
+            <LocationInput onSelect={(place) => setSelectedLocation(place)} />
           </div>
 
           {/* DISTANCE */}
@@ -178,6 +169,21 @@ function ShopContent() {
                   {cat}
                 </option>
               ))}
+            </select>
+          </div>
+
+          {/* STOCK AVAILABILITY */}
+          <div className="mb-6">
+            <p className="text-sm font-medium mb-1">Stock Status</p>
+            <select
+              value={stockStatus}
+              onChange={(e) => setStockStatus(e.target.value)}
+              className="w-full border rounded px-2 py-1"
+            >
+              <option value="">All</option>
+              <option value="STOCK_AVAILABLE">Available</option>
+              <option value="STOCK_AVAILABLE_BY_PROXY">Available by Proxy</option>
+              <option value="STOCK_UNAVAILABLE">Unavailable</option>
             </select>
           </div>
 
