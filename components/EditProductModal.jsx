@@ -158,6 +158,7 @@ export default function EditProductModal({ product, currency, onClose, onSave, g
                                 value={formData.stock}
                                 onChange={handleChange}
                                 min="0"
+                                max="50"
                                 step="1"
                                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 text-base outline-none transition duration-150 ease-in-out"
                                 required
