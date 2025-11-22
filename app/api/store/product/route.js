@@ -114,7 +114,7 @@ export async function POST(request) {
     }
 }
 
----
+
 
 // =========================================================
 // GET: Fetch all products for the authenticated store (UNCHANGED)

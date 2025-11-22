@@ -1,5 +1,5 @@
 'use client'
-import { ArrowRight, StarIcon } from "lucide-react"
+import { ArrowRight, StarIcon, MessageSquare } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
@@ -8,13 +8,20 @@ const ProductDescription = ({ product }) => {
 
     const [selectedTab, setSelectedTab] = useState('Description')
 
+    const whatsappNumber = "917045370058"; // Add your number here, e.g. "919876543210"
+    const whatsappLink = `https://wa.me/${whatsappNumber}`;
+
     return (
-        <div className="my-18 text-sm text-slate-600">
+        <div className="relative my-18 text-sm text-slate-600">
 
             {/* Tabs */}
             <div className="flex border-b border-slate-200 mb-6 max-w-2xl">
                 {['Description', 'Reviews'].map((tab, index) => (
-                    <button className={`${tab === selectedTab ? 'border-b-[1.5px] font-semibold' : 'text-slate-400'} px-3 py-2 font-medium`} key={index} onClick={() => setSelectedTab(tab)}>
+                    <button
+                        className={`${tab === selectedTab ? 'border-b-[1.5px] font-semibold' : 'text-slate-400'} px-3 py-2 font-medium`}
+                        key={index}
+                        onClick={() => setSelectedTab(tab)}
+                    >
                         {tab}
                     </button>
                 ))}
@@ -54,6 +61,16 @@ const ProductDescription = ({ product }) => {
                     <Link href={`/shop/${product.store.username}`} className="flex items-center gap-1.5 text-green-500"> view store <ArrowRight size={14} /></Link>
                 </div>
             </div>
+
+            {/* WhatsApp Floating Button */}
+            <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center z-50 transition"
+            >
+                <MessageSquare size={24} />
+            </a>
         </div>
     )
 }
