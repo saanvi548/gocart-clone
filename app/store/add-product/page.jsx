@@ -211,7 +211,7 @@ export default function StoreAddProduct() {
                 </label>
                 <label htmlFor="" className="flex flex-col gap-2 ">
                     Stock (Units)
-                    <input type="number" name="stock" max="25" min="0" onChange={onChangeHandler} value={productInfo.stock} placeholder="0" className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
+                    <input type="number" name="stock" max="70" min="0" onChange={onChangeHandler} value={productInfo.stock} placeholder="0" className="w-full max-w-45 p-2 px-4 outline-none border border-slate-200 rounded resize-none" required />
                 </label>
             </div>
 
