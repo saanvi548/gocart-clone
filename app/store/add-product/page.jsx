@@ -5,6 +5,7 @@ import axios from "axios"
 import Image from "next/image"
 import { useState } from "react"
 import { toast } from "react-hot-toast"
+import LocationInput from "@/components/LocationsInput"
 
 export default function StoreAddProduct() {
 
@@ -18,12 +19,44 @@ export default function StoreAddProduct() {
         price: 0,
         category: "",
     })
+    const [selectedLocation, setSelectedLocation] = useState(null)
+    const [locationDetails, setLocationDetails] = useState(null)
     const [loading, setLoading] = useState(false)
 
     const { getToken } = useAuth()
 
     const onChangeHandler = (e) => {
         setProductInfo({ ...productInfo, [e.target.name]: e.target.value })
+    }
+
+    const handleLocationSelect = async (place) => {
+        setSelectedLocation(place)
+        
+        // Fetch detailed location info (coordinates, etc.)
+        try {
+            const res = await fetch(`/api/location/details?place_id=${place.place_id}`)
+            const data = await res.json()
+            
+            if (data.status === 'OK') {
+                const { geometry, formatted_address, address_components } = data.result
+                
+                // Extract city and country
+                const city = address_components?.find(c => c.types.includes("locality"))?.long_name
+                const country = address_components?.find(c => c.types.includes("country"))?.long_name
+                
+                setLocationDetails({
+                    latitude: geometry.location.lat,
+                    longitude: geometry.location.lng,
+                    address: formatted_address,
+                    placeId: place.place_id,
+                    city: city || '',
+                    country: country || '',
+                })
+            }
+        } catch (error) {
+            console.error('Error fetching location details:', error)
+            toast.error('Failed to fetch location details')
+        }
     }
 
     const onSubmitHandler = async (e) => {
@@ -48,6 +81,11 @@ export default function StoreAddProduct() {
         if (!images[1] && !images[2] && !images[3] && !images[4]) {
             return toast.error('Please upload at least one image')
         }
+
+        // 4. Check for location
+        if (!locationDetails) {
+            return toast.error('Please select a product location')
+        }
         
         // --- END VALIDATION ---
         
@@ -60,6 +98,14 @@ export default function StoreAddProduct() {
             for (const key in productInfo) {
                 formData.append(key, productInfo[key])
             }
+
+            // Append location data
+            formData.append('latitude', locationDetails.latitude)
+            formData.append('longitude', locationDetails.longitude)
+            formData.append('address', locationDetails.address)
+            formData.append('placeId', locationDetails.placeId)
+            formData.append('city', locationDetails.city)
+            formData.append('country', locationDetails.country)
 
             // Append images
             Object.keys(images).forEach((key) => {
@@ -85,6 +131,8 @@ export default function StoreAddProduct() {
             })
 
             setImages({ 1: null, 2: null, 3: null, 4: null })
+            setSelectedLocation(null)
+            setLocationDetails(null)
 
         } catch (error) {
             toast.error(error?.response?.data?.error || error.message)
@@ -137,9 +185,26 @@ export default function StoreAddProduct() {
                 ))}
             </select>
 
+            {/* NEW: Location Input */}
+            <div className="my-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Location <span className="text-red-500">*</span>
+                </label>
+                <div className="max-w-sm">
+                    <LocationInput onSelect={handleLocationSelect} />
+                </div>
+                {selectedLocation && (
+                    <p className="text-sm text-green-600 mt-2">
+                        ✓ Selected: {selectedLocation.description}
+                    </p>
+                )}
+            </div>
+
             <br />
 
-            <button disabled={loading} className="bg-slate-800 text-white px-6 mt-7 py-2 hover:bg-slate-900 rounded transition">Add Product</button>
+            <button disabled={loading} className="bg-slate-800 text-white px-6 mt-7 py-2 hover:bg-slate-900 rounded transition disabled:opacity-50 disabled:cursor-not-allowed">
+                Add Product
+            </button>
         </form>
     )
 }
