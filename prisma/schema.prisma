@@ -32,24 +32,33 @@ model User {
 
 // Required for creating a Product: name, description, mrp, price, images, category, storeId
 model Product {
-    id            String    @id @default(cuid())
-    name          String
-    description   String
-    mrp           Float
-    price         Float
-    images        String[]
-    category      String
-    inStock       Boolean   @default(true)
-    storeId       String
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
+    id          String   @id @default(cuid())
+    name        String
+    description String
+    mrp         Float
+    price       Float
+    images      String[]
+    category    String
+    inStock     Boolean  @default(true)
+    storeId     String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
 
-    // New Fields
-    stock         Int         @default(0)
-    stockStatus   StockStatus @default(STOCK_AVAILABLE)
-    availableFrom DateTime // The start date of availability
-    availableTo   DateTime // The end date of availability
-    
+    // Location fields
+    latitude    Float?
+    longitude   Float?
+    address     String?
+    placeId     String?
+    city        String?
+    country     String?
+
+      // Stock management fields
+    stock          Int?
+    stockStatus    StockStatus?
+    availableFrom  DateTime?
+    availableTo    DateTime?
+
+
     // Relations
     store         Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
     orderItems    OrderItem[]
@@ -66,6 +75,12 @@ enum OrderStatus {
 enum PaymentMethod {
     COD
     STRIPE
+}
+
+enum StockStatus {
+    STOCK_AVAILABLE
+    STOCK_UNAVAILABLE
+    STOCK_AVAILABLE_BY_PROXY
 }
 
 // Required for creating an Order: total, userId, storeId, addressId, isPaid, paymentMethod, isCouponUsed, coupon (JSON), orderItems (nested)
@@ -168,6 +183,13 @@ model Store {
     contact     String
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
+    
+    // Location fields
+    latitude    Float?
+    longitude   Float?
+    placeId     String?
+    city        String?
+    country     String?
 
     Product Product[]
     Order   Order[]
